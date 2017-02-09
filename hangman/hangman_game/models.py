@@ -46,7 +46,7 @@ class Game(models.Model):
         """
         return self.TOTAL_TURNS - self.turns_taken
 
-    def update_turn(word):
+    def update_turn(self, word):
         """
         Return True if win/lose conditions are met.
         Otherwise return False.
@@ -81,13 +81,13 @@ class Game(models.Model):
         self.save()
         return game_is_over
 
-    def _get_string_union(string1, string2):
+    def _get_string_union(self, string1, string2):
         """
         Return a new string
         containing all of the letters
         in the two passed strings, unordered.
         """
-        return "".join(set(list(word)) | set(list(self.letters_played)))
+        return "".join(set(list(string1)) | set(list(string2)))
 
 
 class UserHistory(models.Model):
@@ -97,7 +97,7 @@ class UserHistory(models.Model):
     games_played = models.SmallIntegerField(default=0)
     games_won = models.SmallIntegerField(default=0)
     current_game = models.ForeignKey(Game)
-    user_ip = models.GenericIPAddressField()
+    user_ip = models.GenericIPAddressField(blank=True, null=True)
 
     def games_lost():
         """
