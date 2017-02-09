@@ -11,7 +11,8 @@ class GameManager(models.Manager):
         """
         Create a new game instance.
         """
-        found_word = Word.objects.random()
+        found_word = Word.objects.random().word_text
+        import ipdb; ipdb.set_trace()
         game = self.create(winning_word=found_word)
         return game
 
@@ -24,6 +25,7 @@ class Game(models.Model):
     turns_taken: the number of turns taken so far.
     letters_played: the letters a user has guessed.
     """
+
     objects = GameManager()
     TOTAL_TURNS = 10
     # max word length in current words.txt is 25.
@@ -41,7 +43,7 @@ class Game(models.Model):
                                   choices=GAME_STATES,
                                   default='A')
 
-    def turns_remaining():
+    def turns_remaining(self):
         """
         Return the remaining number of turns.
         """
@@ -70,7 +72,7 @@ class Game(models.Model):
             self.game_state = 'W'
             game_is_over = True
 
-        elif self.turns_taken == 10:
+        elif self.turns_taken == self.TOTAL_TURNS - 1: # account for 0-index
             self.game_state = 'L'
             game_is_over = True
 
@@ -117,7 +119,10 @@ class WordManager(models.Manager):
         Return a random word.
         """
         count = self.aggregate(count=models.Count('id'))['count']
-        random_index = random.randint(0, count - 1)
+        try:
+            random_index = random.randint(0, count - 1)
+        except ValueError:
+            random_index = 0
         return self.all()[random_index]
 
 class Word(models.Model):
