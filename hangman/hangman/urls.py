@@ -18,4 +18,11 @@ from django.contrib import admin
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^hangman/', include('hangman_game.urls')),
+]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+    url(r'^__debug__/', include(debug_toolbar.urls)),
 ]
