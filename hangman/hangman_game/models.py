@@ -3,6 +3,24 @@ import random
 import uuid
 # Create your models here.
 
+class UserHistory(models.Model):
+    """
+    Represents a user's history.
+    """
+    games_played = models.SmallIntegerField(default=0)
+    games_won = models.SmallIntegerField(default=0)
+
+    NULL_COOKIE = '00000000-0000-0000-0000-000000000000'
+    user_cookie = models.UUIDField(default=NULL_COOKIE)
+
+    def games_lost(self):
+        """
+        Return the number of games lost
+        for a user.
+        """
+        return self.games_played - self.games_won
+
+
 class GameManager(models.Manager):
     """
     Manager for the Game class.
@@ -24,14 +42,14 @@ class Game(models.Model):
     turns_taken: the number of turns taken so far.
     letters_played: the letters a user has guessed.
     """
-
     objects = GameManager()
     TOTAL_TURNS = 10
-    ALPHABET = sorted(set(['a','b','c','d','e','f','g','h','i','j','k','l','m',
-                'n','o','p','q','r','s','t','u','v','w','x','y','z']))
+    ALPHABET = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
+                'n','o','p','q','r','s','t','u','v','w','x','y','z']
     # max word length in current words.txt is 25.
     # if another word list is substituted,
     # may need to increase max_length for the following two fields.
+    user_history = models.ForeignKey(UserHistory, blank=True, null=True)
     winning_word = models.CharField(max_length=25)
     current_word = models.CharField(max_length=25)
     turns_taken = models.SmallIntegerField(default=0)
@@ -89,7 +107,7 @@ class Game(models.Model):
         """
         Return all unplayed letters in alphabetical order.
         """
-        return sorted(self.ALPHABET - set(list(self.letters_played)))
+        return sorted(set(self.ALPHABET) - set(list(self.letters_played)))
 
     def _get_string_union(self, string1, string2):
         """
@@ -99,30 +117,10 @@ class Game(models.Model):
         """
         return "".join(set(list(string1)) | set(list(string2)))
 
-
-class UserHistory(models.Model):
-    """
-    Represents a user's history.
-    """
-    games_played = models.SmallIntegerField(default=0)
-    games_won = models.SmallIntegerField(default=0)
-    current_game = models.ForeignKey(Game, blank=True, null=True)
-
-    NULL_COOKIE = '00000000-0000-0000-0000-000000000000'
-    user_cookie = models.UUIDField(default=NULL_COOKIE)
-
-    def games_lost(self):
-        """
-        Return the number of games lost
-        for a user.
-        """
-        return self.games_played - self.games_won
-
 class WordManager(models.Manager):
     """
     Manager for the Word model.
     """
-
     def random(self):
         """
         Return a random word.
