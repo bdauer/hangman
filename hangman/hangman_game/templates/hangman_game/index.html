@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Hangman: The Reckoning</h1>
+<br>
+<br>
+<form method="POST" action="{% url 'hangman_game:start game'  %}">
+    {% csrf_token %}
+
+    <button type="button submit" name="New Game">New Game</button>
+
+
+{% endblock %}
