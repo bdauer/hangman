@@ -28,7 +28,7 @@ class GameTestCases(TestCase):
         game = Game.objects.get(pk=1)
         self.assertEqual(game.turns_remaining, 8)
 
-    def test_update_turn(word):
+    def test_update_turn(self):
 
         game = Game.objects.get(pk=1)
         # verify initial state
@@ -68,7 +68,9 @@ class GameTestCases(TestCase):
 class UserHistoryTestCases(TestCase):
 
     def setUp(self):
-        UserHistory.objects.create(pk=1, games_played=5, games_won=3)
+
+        UserHistory.objects.create(pk=1, games_played=5,
+                                   games_won=3)
 
     def test_games_lost(self):
         """
