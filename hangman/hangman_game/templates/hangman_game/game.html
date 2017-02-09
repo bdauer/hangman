@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xs-4">
+    </div>
+    <div class="col-xs-4">
+    </div>
+    <div class="col-xs-4">
+        <p>Turns remaining: {{ game.turns_remaining }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+    </div>
+        <div class="col-10 text-center">
+    <canvas id="hangman" width="500" height="500" style="border:1px solid"></canvas>
+    <div class="col">
+    </div>
+</div>
+
+<div class="row text-center">
+    <div class="col-xs-4">
+    </div>
+    <div class="col-xs-4">
+        <div class="row text-center" role="group">
+
+        {% for letter in game.ALPHABET %}
+            <button type="button" class="btn btn-default"
+            {% if letter in game.letters_played %}
+                disabled
+            {% endif %}
+
+            >{{ letter }}</button>
+
+
+        {% endfor %}
+        </div>
+    </div>
+    <div class="col-xs-4">
+    </div>
+</div>
+
+{% endblock %}
