@@ -1,12 +1,33 @@
 """
-Original, rejected solution.
-This takes up to two tenths of a second to get a random word.
+Methods for building a word table, includes alternative options.
+
+build_word_table is preferred.
+It will populate the Word table in the database
+with words from a file. This allows for
+WordManager's random() method, which takes ~15ms.
+
+generate_json_word_list was the original solution.
+It took up to 200ms to get a random word.
 Could see using this approach for a local app without a database.
 """
 import random
 import json
 
-def get_random_word(filename):
+
+def build_word_table(filename):
+    """
+    Build the Word table from a file.
+
+    The file passed to build_word_table
+    should contain one word and a newline character
+    on each line.
+    """
+    with open(filename, 'r') as f:
+        for line in f:
+            word = line.strip('\n')
+            Word.objects.create(word_text=word)
+
+def get_random_json_word(filename):
     """
     Get a random word from a json-serialized python dictionary,
     as created by generate_word_list().
@@ -16,7 +37,7 @@ def get_random_word(filename):
         random_int = random.randint(0, (len(word_list) - 1))
         return word_list[str(random_int)]
 
-def generate_word_list(filename):
+def generate_json_word_list(filename):
     """
     Create a new json file containing a dictionary representation
     of the word list.
