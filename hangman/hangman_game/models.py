@@ -1,6 +1,6 @@
 from django.db import models
 import random
-
+import uuid
 # Create your models here.
 
 class GameManager(models.Manager):
@@ -12,7 +12,6 @@ class GameManager(models.Manager):
         Create a new game instance.
         """
         found_word = Word.objects.random().word_text
-        import ipdb; ipdb.set_trace()
         game = self.create(winning_word=found_word)
         return game
 
@@ -28,6 +27,8 @@ class Game(models.Model):
 
     objects = GameManager()
     TOTAL_TURNS = 10
+    ALPHABET = sorted(set(['a','b','c','d','e','f','g','h','i','j','k','l','m',
+                'n','o','p','q','r','s','t','u','v','w','x','y','z']))
     # max word length in current words.txt is 25.
     # if another word list is substituted,
     # may need to increase max_length for the following two fields.
@@ -84,6 +85,12 @@ class Game(models.Model):
         self.save()
         return game_is_over
 
+    def letters_remaining(self):
+        """
+        Return all unplayed letters in alphabetical order.
+        """
+        return sorted(self.ALPHABET - set(list(self.letters_played)))
+
     def _get_string_union(self, string1, string2):
         """
         Return a new string
@@ -100,7 +107,9 @@ class UserHistory(models.Model):
     games_played = models.SmallIntegerField(default=0)
     games_won = models.SmallIntegerField(default=0)
     current_game = models.ForeignKey(Game, blank=True, null=True)
-    user_ip = models.GenericIPAddressField(blank=True, null=True)
+
+    NULL_COOKIE = '00000000-0000-0000-0000-000000000000'
+    user_cookie = models.UUIDField(default=NULL_COOKIE)
 
     def games_lost(self):
         """
