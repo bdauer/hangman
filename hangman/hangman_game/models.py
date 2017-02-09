@@ -24,6 +24,7 @@ class Game(models.Model):
     turns_taken: the number of turns taken so far.
     letters_played: the letters a user has guessed.
     """
+    objects = GameManager()
     TOTAL_TURNS = 10
     # max word length in current words.txt is 25.
     # if another word list is substituted,
@@ -96,30 +97,32 @@ class UserHistory(models.Model):
     """
     games_played = models.SmallIntegerField(default=0)
     games_won = models.SmallIntegerField(default=0)
-    current_game = models.ForeignKey(Game)
+    current_game = models.ForeignKey(Game, blank=True, null=True)
     user_ip = models.GenericIPAddressField(blank=True, null=True)
 
-    def games_lost():
+    def games_lost(self):
         """
         Return the number of games lost
         for a user.
         """
-        return games_played - games_won
+        return self.games_played - self.games_won
 
 class WordManager(models.Manager):
     """
     Manager for the Word model.
     """
+
     def random(self):
         """
         Return a random word.
         """
         count = self.aggregate(count=models.Count('id'))['count']
-        random_index = randint(0, count - 1)
+        random_index = random.randint(0, count - 1)
         return self.all()[random_index]
 
 class Word(models.Model):
     """
     Each row represents one word in the word list.
     """
+    objects = WordManager()
     word_text = models.CharField(max_length=25)
