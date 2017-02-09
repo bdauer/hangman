@@ -2,13 +2,26 @@
 
 {% block content %}
 
-<h1>Hangman: The Reckoning</h1>
-<br>
-<br>
+
+<div class="row jumbotron">
+    <div class="col-xs-3"></div>
+    <div class="col-xs-6 text-center">
+    <p>Greetings, Starfighter. You have been recruited by Minor League to defend
+        an innocent life from death by hanging.
+        Your tool of defense is
+        <br>
+        &lt;method:guess_word&gt;.
+        <br>
+        You will have <br>&lt;turns:ten&gt;<br> chances to <br>&lt;verbose-method:guess a random word&gt;<br> before full materialization
+        of the accused and subsequent execution.
+        <br>The league is counting on you. Good luck.
+    </div>
+    <div class="col-xs-3"></div>
+</div>
 <form method="POST" action="{% url 'hangman_game:start game'  %}">
     {% csrf_token %}
-
-    <button type="button submit" name="New Game">New Game</button>
-
+<div class="row text-center">
+    <button type="button submit" class="btn btn-primary btn-lg" name="New Game">Protect Accused</button>
+</div>
 
 {% endblock %}
