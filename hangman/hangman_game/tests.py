@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from .models import GameManager, Game, UserHistory, WordManager, Word
 # Create your tests here.
 
 class GameManagerTestCases(TestCase):
