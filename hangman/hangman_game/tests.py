@@ -68,6 +68,17 @@ class GameTestCases(TestCase):
         # test losing condition met
         self.assertEqual(game.game_state, 'L')
 
+    def test_letters_remaining(self):
+        """
+        Test that it returns all remaining letters after having played a few.
+        """
+        new_game = Game.objects.create_game()
+        new_game.letters_played = "abc"
+        new_game.save()
+        remaining_letters = ['d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+                             'x', 'y', 'z']
+        self.assertEqual(new_game.letters_remaining(), remaining_letters)
 
 class UserHistoryTestCases(TestCase):
 
