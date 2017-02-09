@@ -3,10 +3,10 @@ import random
 
 # Create your models here.
 
-class GameManager(model.Manager):
-"""
-Manager for the Game class.
-"""
+class GameManager(models.Manager):
+    """
+    Manager for the Game class.
+    """
     def create_game(self):
         """
         Create a new game instance.
@@ -28,8 +28,8 @@ class Game(models.Model):
     # max word length in current words.txt is 25.
     # if another word list is substituted,
     # may need to increase max_length for the following two fields.
-    winning_word = CharField(max_length=25)
-    current_word = CharField(max_length=25)
+    winning_word = models.CharField(max_length=25)
+    current_word = models.CharField(max_length=25)
     turns_taken = models.SmallIntegerField(default=0)
     letters_played = models.CharField(max_length=10)
 
@@ -94,8 +94,8 @@ class UserHistory(models.Model):
     """
     Represents a user's history.
     """
-    games_played = SmallIntegerField(default=0)
-    games_won = SmallIntegerField(default=0)
+    games_played = models.SmallIntegerField(default=0)
+    games_won = models.SmallIntegerField(default=0)
     current_game = models.ForeignKey(Game)
     user_ip = models.GenericIPAddressField()
 
@@ -122,4 +122,4 @@ class Word(models.Model):
     """
     Each row represents one word in the word list.
     """
-    word_text = CharField(max_length=25)
+    word_text = models.CharField(max_length=25)
