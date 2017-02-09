@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect, JsonResponse
 from django.core.urlresolvers import reverse_lazy
+from .models import Game, UserHistory, Word
 # Create your views here.
 def index(request):
     """
@@ -10,4 +11,6 @@ def index(request):
 
 def start_game(request):
 
-    return HttpResponse()
+    game = Game.objects.create_game()
+
+    return render(request, 'hangman_game/game.html', {'game': game})
