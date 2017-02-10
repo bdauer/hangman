@@ -65,10 +65,6 @@ class Game(models.Model):
 
     def update_turn(self, word, character):
         """
-        Return True if win/lose conditions are met.
-        Otherwise return False.
-
-
         Peform operations related to updating a turn.
         Check for win/lose conditions,
         updating game_state accordingly.
@@ -79,28 +75,34 @@ class Game(models.Model):
 
         In either case, update the letters-played list.
         """
-        # kept all in one method
-        # to reduce calls to save()/db access.
-        game_is_over = False
         if word == self.winning_word:
-            self.game_state = 'W'
+            self = self._perform_end_game_updates('W')
             self.user_history.games_won += 1
-            game_is_over = True
 
         elif character not in self.winning_word:
-            self.num_failed_guesses+=1
+            self.num_failed_guesses += 1
 
         if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
-            self.game_state = 'L'
-            self.user_history.games_won += 1
-            self.user_history.active_game = None
-            game_is_over = True
+            self = self._perform_end_game_updates('L')
 
         self.current_word = word
         self.turns_taken += 1
         self.letters_played = self._get_string_union(word, self.letters_played)
         self.save()
-        return game_is_over
+        # should get and return all indices where character appears.
+
+    def _perform_end_game_updates(self, new_state):
+        """
+        Return the updated Game instance.
+
+        Update game_state with new_state,
+        increment games_played and reset active_game in related UserHistory.
+        """
+        self.game_state = new_state
+        self.user_history.games_played += 1
+        self.user_history.active_game = None
+        return self
+
 
     def letters_remaining(self):
         """
