@@ -47,12 +47,23 @@ class GameTestCases(TestCase):
         self.assertEqual(game.game_state, 'W')
         self.assertEqual(game.turns_taken, 3)
 
+        # reset game state
         game.game_state = 'A'
 
+        # test num_failed_guesses
         game.update_turn("f", "a")
-
         self.assertEqual(game.num_failed_guesses, 1)
 
+        # test matching indices returned with one match.
+        self.assertEqual(game.update_turn("fuzzy", "f"), [0])
+
+        # test matching indices returned with two matches.
+        self.assertEqual(game.update_turn("fuzzy", "z"), [2, 3])
+
+        # test matching indices returned with zero matches.
+        self.assertEqual(game.update_turn("fuzzy", "x"), [])
+
+        # create losing condition
         game.update_turn("f", "a")
         game.update_turn("f", "a")
         game.update_turn("f", "a")
