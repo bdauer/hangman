@@ -33,6 +33,10 @@ def index(request):
 
 def start_game(request):
 
+    userid = request.get_signed_cookie('userid')
+    user_history = UserHistory.objects.get(user_cookie=userid)
+
     game = Game.objects.create_game()
+    game.user_history = user_history
 
     return render(request, 'hangman_game/game.html', {'game': game})
