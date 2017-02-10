@@ -19,6 +19,7 @@ class GameTestCases(TestCase):
     def setUp(self):
         Word.objects.create(word_text="fuzzypickles")
         new_game = Game.objects.create_game()
+        new_game.user_history = UserHistory.objects.create()
         new_game.save()
 
     def test_update_turn(self):
@@ -30,31 +31,37 @@ class GameTestCases(TestCase):
         self.assertEqual(game.letters_played, "")
 
         # test failed word
-        game.update_turn("fuzzy")
+        game.update_turn("fuzzy", "f")
         self.assertEqual(game.game_state, 'A')
         self.assertEqual(game.turns_taken, 1)
         self.assertEqual(set(list("fuzzy")), set(list(game.letters_played)))
 
         # test unmatching letters in word.
-        game.update_turn("foyer")
+        game.update_turn("foyer", "f")
         self.assertEqual(set(list("fuzyoer")), set(list(game.letters_played)))
+        self.assertEqual(game.game_state, 'A')
         self.assertEqual(game.turns_taken, 2)
 
         # test winning condition met
-        game.update_turn("fuzzypickles")
+        game.update_turn("fuzzypickles", "f")
         self.assertEqual(game.game_state, 'W')
-        self.assertEqual(game.turns_taken, 2)
+        self.assertEqual(game.turns_taken, 3)
 
         game.game_state = 'A'
 
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
-        game.update_turn("f")
+        game.update_turn("f", "a")
+
+        self.assertEqual(game.num_failed_guesses, 1)
+
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
+        game.update_turn("f", "a")
 
         # test losing condition met
         self.assertEqual(game.game_state, 'L')
