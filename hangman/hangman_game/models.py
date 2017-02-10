@@ -36,14 +36,14 @@ class GameManager(models.Manager):
 class Game(models.Model):
     """
     Represents one game of hangman.
-    TOTAL_TURNS: the maximum number of turns in a game.
+    MAX_FAILED_GUESSES: the maximum number of turns in a game.
     wining_word: the word that the player must guess.
     current word: the player's current guess.
     turns_taken: the number of turns taken so far.
     letters_played: the letters a user has guessed.
     """
     objects = GameManager()
-    TOTAL_TURNS = 10
+    MAX_FAILED_GUESSES = 10
     ALPHABET = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
                 'n','o','p','q','r','s','t','u','v','w','x','y','z']
     # max word length in current words.txt is 25.
@@ -53,7 +53,8 @@ class Game(models.Model):
     winning_word = models.CharField(max_length=25)
     current_word = models.CharField(max_length=25)
     turns_taken = models.SmallIntegerField(default=0)
-    letters_played = models.CharField(max_length=10)
+    letters_played = models.CharField(max_length=26)
+    num_failed_guesses = models.SmallIntegerField(default=0)
 
     GAME_STATES = ( ('A', 'active'),
                     ('W', 'won'),
@@ -62,13 +63,7 @@ class Game(models.Model):
                                   choices=GAME_STATES,
                                   default='A')
 
-    def turns_remaining(self):
-        """
-        Return the remaining number of turns.
-        """
-        return self.TOTAL_TURNS - self.turns_taken
-
-    def update_turn(self, word):
+    def update_turn(self, word, character):
         """
         Return True if win/lose conditions are met.
         Otherwise return False.
@@ -89,13 +84,19 @@ class Game(models.Model):
         game_is_over = False
         if word == self.winning_word:
             self.game_state = 'W'
+            self.user_history.games_won += 1
             game_is_over = True
 
-        elif self.turns_taken == self.TOTAL_TURNS - 1: # account for 0-index
+        elif self.num_failed_guesses == self.MAX_FAILED_GUESSES: # account for 0-index
             self.game_state = 'L'
+            self.user_history.games_won += 1
+            self.user_history.active_game = None
             game_is_over = True
 
         else:
+            if character not in self.winning_word:
+                self.nume_failed_guesses+=1
+
             self.current_word = word
             self.turns_taken += 1
 
