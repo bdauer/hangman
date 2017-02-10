@@ -12,6 +12,7 @@ class UserHistory(models.Model):
 
     NULL_COOKIE = '00000000-0000-0000-0000-000000000000'
     user_cookie = models.UUIDField(default=NULL_COOKIE)
+    active_game_id = models.SmallIntegerField(blank=True, null=True)
 
     def games_lost(self):
         """
@@ -25,12 +26,12 @@ class GameManager(models.Manager):
     """
     Manager for the Game class.
     """
-    def create_game(self):
+    def create_game(self, user_history):
         """
         Create a new game instance.
         """
         found_word = Word.objects.random().word_text
-        game = self.create(winning_word=found_word)
+        game = self.create(winning_word=found_word, user_history=user_history)
         return game
 
 class Game(models.Model):
@@ -101,7 +102,7 @@ class Game(models.Model):
         """
         self.game_state = new_state
         self.user_history.games_played += 1
-        self.user_history.active_game = None
+        self.user_history.active_game_id= None
         return self
 
     def _get_character_indices(self, word, character):
