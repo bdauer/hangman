@@ -87,19 +87,17 @@ class Game(models.Model):
             self.user_history.games_won += 1
             game_is_over = True
 
-        elif self.num_failed_guesses == self.MAX_FAILED_GUESSES: # account for 0-index
+        elif character not in self.winning_word:
+            self.num_failed_guesses+=1
+
+        if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
             self.game_state = 'L'
             self.user_history.games_won += 1
             self.user_history.active_game = None
             game_is_over = True
 
-        else:
-            if character not in self.winning_word:
-                self.nume_failed_guesses+=1
-
-            self.current_word = word
-            self.turns_taken += 1
-
+        self.current_word = word
+        self.turns_taken += 1
         self.letters_played = self._get_string_union(word, self.letters_played)
         self.save()
         return game_is_over
