@@ -89,7 +89,8 @@ class Game(models.Model):
         self.turns_taken += 1
         self.letters_played = self._get_string_union(word, self.letters_played)
         self.save()
-        # should get and return all indices where character appears.
+
+        return self._get_character_indices(self.winning_word, character)
 
     def _perform_end_game_updates(self, new_state):
         """
@@ -102,6 +103,14 @@ class Game(models.Model):
         self.user_history.games_played += 1
         self.user_history.active_game = None
         return self
+
+    def _get_character_indices(self, word, character):
+        """
+        Return a list containing every index
+        where 'character' appears in the string 'word'.
+        """
+        return [index for index, letter in enumerate(word)\
+                if letter == character]
 
 
     def letters_remaining(self):
