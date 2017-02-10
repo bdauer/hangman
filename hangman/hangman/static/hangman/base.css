@@ -1,5 +1,7 @@
 
 
+
+/* customize appearance of letters played and their fields  */
 input.played-letters-display {
     width:1.5em;
     height:1.5em;
@@ -8,24 +10,19 @@ input.played-letters-display {
     margin: .1em;
     color: white !important;
 }
-
 input.played-letters-display::-webkit-input-placeholder { /* Chrome/Opera/Safari */
   color: black;
   opacity: 1;
-
 }
 input.played-letters-display::-moz-placeholder { /* Firefox 19+ */
   color: black;
   opacity: 1;
-
 }
 input.played-letters-display:-ms-input-placeholder { /* IE 10+ */
   color: black;
   opacity: 1;
-
 }
 input.played-letters-display:-moz-placeholder { /* Firefox 18- */
   color: black;
   opacity: 1;
-
 }
