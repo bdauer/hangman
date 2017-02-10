@@ -8,7 +8,7 @@
     <div class="col-xs-4">
     </div>
     <div class="col-xs-4">
-        <p>Turns remaining: {{ game.turns_remaining }}</p>
+        <p>Turns taken: {{ game.turns_taken }}</p>
         <p>Wins: {{ game.user_history.games_won }}</p>
         <p>Losses: {{ game.user_history.games_lost }}
         <p></p>
@@ -32,7 +32,7 @@
     <ul class="list-inline text-center">
         {% for letter in game.winning_word %}
          <!-- class="form-control" -->
-            <input type="text" class="text-center played-letters-display" id="{{ forloop.counter }}" disabled placeholder="m">
+            <input type="text" class="text-center played-letters-display" id="{{ forloop.counter }}" disabled>
 
         {% endfor %}
     </ul>
