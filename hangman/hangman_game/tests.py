@@ -21,15 +21,6 @@ class GameTestCases(TestCase):
         new_game = Game.objects.create_game()
         new_game.save()
 
-    def test_turns_remaining(self):
-        """
-        Test that turns_remaining calculates the difference between
-        TOTAL_TURNS and turns_taken.
-        """
-
-        game = Game.objects.get(pk=1)
-        self.assertEqual(game.turns_remaining(), 10)
-
     def test_update_turn(self):
 
         game = Game.objects.get(pk=1)
