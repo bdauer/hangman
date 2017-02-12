@@ -99,7 +99,7 @@ class Game(models.Model):
         adds the played letter to letters_played
         and increments the turn counter.
         """
-        self = self.update_current_word(character)
+        self = self.update_current_word(played_letter)
         guessed_correctly = True
 
         if played_letter not in self.winning_word:
