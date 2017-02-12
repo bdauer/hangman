@@ -64,7 +64,7 @@ class Game(models.Model):
                                   choices=GAME_STATES,
                                   default='A')
 
-    def update_turn(self, word, character):
+    def update_turn(self, character):
         """
         Peform operations related to updating a turn.
         Check for win/lose conditions,
@@ -76,26 +76,37 @@ class Game(models.Model):
 
         In either case, update the letters-played list.
         """
-        if word == self.winning_word:
+        self = self.update_current_word(character)
+        # Check for character in word first.
+        # This prevents a hijacked word submission
+        # from qualifying as an early win.
+        if character not in self.winning_word:
+            self.num_failed_guesses += 1
+
+            if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
+                self = self._perform_end_game_updates('L')
+
+        elif self.current_word == self.winning_word:
             self = self._perform_end_game_updates('W')
             self.user_history.games_won += 1
 
-        elif character not in self.winning_word:
-            self.num_failed_guesses += 1
-
-        if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
-            self = self._perform_end_game_updates('L')
-
-        self.current_word = word
         self.turns_taken += 1
         self.letters_played += character
-        # self.letters_played = self._get_string_union(word, self.letters_played)
+        self.save()
+
+    def update_current_word(self, character):
+        """
+        Return the game instance
+        with the current word updated
+        to include the character
+        wherever it appears.
+        """
         indices = self._get_character_indices(self.winning_word, character)
         current_word_list = list(self.current_word)
         for index in indices:
             current_word_list[index] = character
         self.current_word = "".join(current_word_list)
-        self.save()
+        return self
 
     def _perform_end_game_updates(self, new_state):
         """
@@ -116,7 +127,6 @@ class Game(models.Model):
         """
         return [index for index, letter in enumerate(word)\
                 if letter == character]
-
 
     def letters_remaining(self):
         """
