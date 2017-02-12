@@ -88,7 +88,8 @@ class Game(models.Model):
 
         self.current_word = word
         self.turns_taken += 1
-        self.letters_played = self._get_string_union(word, self.letters_played)
+        self.letters_played += character
+        # self.letters_played = self._get_string_union(word, self.letters_played)
         self.save()
 
         return self._get_character_indices(self.winning_word, character)
@@ -102,7 +103,7 @@ class Game(models.Model):
         """
         self.game_state = new_state
         self.user_history.games_played += 1
-        self.user_history.active_game_id= None
+        self.user_history.active_game_id = None
         return self
 
     def _get_character_indices(self, word, character):
