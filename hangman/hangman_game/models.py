@@ -31,7 +31,10 @@ class GameManager(models.Manager):
         Create a new game instance.
         """
         found_word = Word.objects.random().word_text
-        game = self.create(winning_word=found_word, user_history=user_history)
+        current_word = " " * len(found_word)
+        game = self.create(winning_word=found_word,
+                           user_history=user_history,
+                           current_word=current_word)
         return game
 
 class Game(models.Model):
@@ -66,6 +69,7 @@ class Game(models.Model):
 
     def update_turn(self, character):
         """
+        Return True if the letter was found. Otherwise return False.
         Peform operations related to updating a turn.
         Check for win/lose conditions,
         updating game_state accordingly.
@@ -77,11 +81,13 @@ class Game(models.Model):
         In either case, update the letters-played list.
         """
         self = self.update_current_word(character)
+        guessed_correctly = True
         # Check for character in word first.
         # This prevents a hijacked word submission
         # from qualifying as an early win.
         if character not in self.winning_word:
             self.num_failed_guesses += 1
+            guessed_correctly = False
 
             if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
                 self = self._perform_end_game_updates('L')
@@ -93,6 +99,7 @@ class Game(models.Model):
         self.turns_taken += 1
         self.letters_played += character
         self.save()
+        return guessed_correctly
 
     def update_current_word(self, character):
         """
@@ -116,8 +123,13 @@ class Game(models.Model):
         increment games_played and reset active_game in related UserHistory.
         """
         self.game_state = new_state
+
+        if new_state == 'W':
+            self.user_history.games_won += 1
+
         self.user_history.games_played += 1
         self.user_history.active_game_id = None
+        self.user_history.save()
         return self
 
     def _get_character_indices(self, word, character):
