@@ -22,14 +22,18 @@ def index(request):
     three_months_from_today = today + three_months
 
     try:
-        user_cookie = request.get_signed_cookie('userid')
-        response.set_signed_cookie('userid', user_cookie,
-                                   expires=three_months_from_today)
+        userid = request.get_signed_cookie('userid')
     except KeyError:
-        user_cookie = uuid.uuid4()
-        UserHistory.objects.create(user_cookie=user_cookie)
-        response.set_signed_cookie('userid', user_cookie,
-                                   expires=three_months_from_today)
+        userid = uuid.uuid4()
+
+    try:
+        UserHistory.objects.get(user_cookie=userid)
+    except ObjectDoesNotExist:
+        UserHistory.objects.create(user_cookie=userid)
+
+
+    response.set_signed_cookie('userid', userid,
+                               expires=three_months_from_today)
     return response
 
 
@@ -43,11 +47,16 @@ def game(request):
         return redirect('hangman_game:index', permanent=True)
 
     try:
-        game_id = request.session['gameid']
+        game_id = request.get_signed_cookie('gameid')
     except KeyError:
         return redirect('hangman_game:index', permanent=True)
 
-    game = Game.objects.get(pk=request.session['gameid'])
+    try:
+        game = Game.objects.get(pk=request.get_signed_cookie('gameid'))
+    except ObjectDoesNotExist:
+        return redirect('hangman_game:index', permanent=True)
+
+    game = Game.objects.get(pk=request.get_signed_cookie('gameid'))
     return render(request, 'hangman_game/game.html', {'game': game})
 
 def start_game(request):
@@ -59,7 +68,12 @@ def start_game(request):
     except KeyError:
         return redirect('hangman_game:index', permanent=True)
 
-    user_history = UserHistory.objects.get(user_cookie=userid)
+    try:
+        user_history = UserHistory.objects.get(user_cookie=userid)
+    except ObjectDoesNotExist:
+        return redirect('hangman_game:index', permanent=True)
+
+
     # If there is an active game associated with the client,
     # restore that game instead of creating a new one.
     # will need to troubleshoot this once everything is connected.
@@ -70,27 +84,44 @@ def start_game(request):
         game = Game.objects.get(pk=user_history.active_game_id)
     except ObjectDoesNotExist:
         game = Game.objects.create_game(user_history)
-
-    game.user_history.active_game_id = game.id
+        game.user_history.active_game_id = game.id
     # game.user_history.save()
-    request = _build_initial_session(request, game)
-    return redirect('hangman_game:game',
+    # request = _build_initial_session(request, game)
+    response = redirect('hangman_game:game',
                     permanent=True)
-    # return render(request, 'hangman_game/game.html', {'game': game})
+    response = _build_initial_cookies(response, game)
+    return(response)
 
-def _build_initial_session(request, game):
+def next_turn(request):
     """
-    Return the request with initial session variables added.
-
-    Session variables include:
-    gameid: the id associated with the game.
-    winning_word_length: the length of the word to be guessed.
-    letters_played: The letters that have been played so far.
-    num_failed_guesses: the number of failed guesses.
+    Endpoint for advancing the turn.
+    Returns a json response containing:
+    the current game state, the current word, letters_played,
+    and the number of failed guesses.
     """
-    request.session['gameid'] = game.id
-    request.session['winning_word_length'] = len(game.winning_word)
-    request.session['letters_played'] = game.letters_played
-    request.session['num_failed_guesses'] = game.num_failed_guesses
+    if request.is_ajax():
 
-    return request
+        gameid = request.get_signed_cookie('gameid')
+        game = Game.objects.get(pk=gameid)
+
+        character = request.POST['character']
+        guessed_correctly = game.update_turn(character)
+
+        content = {'game_state': game.game_state,
+                   'current_word': game.current_word,
+                   'guessed_correctly': guessed_correctly}
+        response = JsonResponse(content)
+
+        return response
+
+
+
+def _build_initial_cookies(response, game):
+    """
+    Return the response with initial game cookies added.
+
+    Cookies:
+    gameid: the id associated with the game. Signed for added security.
+    """
+    response.set_signed_cookie('gameid', game.id)
+    return response
