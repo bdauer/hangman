@@ -90,9 +90,12 @@ class Game(models.Model):
         self.turns_taken += 1
         self.letters_played += character
         # self.letters_played = self._get_string_union(word, self.letters_played)
+        indices = self._get_character_indices(self.winning_word, character)
+        current_word_list = list(self.current_word)
+        for index in indices:
+            current_word_list[index] = character
+        self.current_word = "".join(current_word_list)
         self.save()
-
-        return self._get_character_indices(self.winning_word, character)
 
     def _perform_end_game_updates(self, new_state):
         """
