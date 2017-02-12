@@ -6,6 +6,11 @@ import uuid
 class UserHistory(models.Model):
     """
     Represents a user's history.
+    games_played: The number of games a user has played.
+    games_won: The number of games a user has won.
+    NULL_COOKIE: Used as a default in case a UUID isn't added.
+    user_cookie: used to identify a client.
+    active_game_id: used to track the currently active game.
     """
     games_played = models.SmallIntegerField(default=0)
     games_won = models.SmallIntegerField(default=0)
@@ -29,6 +34,8 @@ class GameManager(models.Manager):
     def create_game(self, user_history):
         """
         Create a new game instance.
+        Finds the word needed to win
+        and defaults the currently guessed word to that length.
         """
         found_word = Word.objects.random().word_text
         current_word = " " * len(found_word)
@@ -42,9 +49,11 @@ class Game(models.Model):
     Represents one game of hangman.
     MAX_FAILED_GUESSES: the maximum number of turns in a game.
     wining_word: the word that the player must guess.
-    current word: the player's current guess.
+    current word: the currently guessed word.
     turns_taken: the number of turns taken so far.
     letters_played: the letters a user has guessed.
+    num_failed_guesses: the number of times a user guessed incorrectly.
+    game_state: indicates a win/loss or that the game is ongoing.
     """
     objects = GameManager()
     MAX_FAILED_GUESSES = 10
@@ -67,25 +76,33 @@ class Game(models.Model):
                                   choices=GAME_STATES,
                                   default='A')
 
-    def update_turn(self, character):
+    def update_turn(self, played_letter):
         """
         Return True if the letter was found. Otherwise return False.
         Peform operations related to updating a turn.
-        Check for win/lose conditions,
-        updating game_state accordingly.
 
-        If the game isn't over:
-        update the current_word with the passed value
-        and increment the turn counter.
+        Checks if the letter is in the winning word.
+        If it isn't, increments the number of failed guesses,
+        sets guessed_correctly to False,
+        and checks if the losing condition was met.
 
-        In either case, update the letters-played list.
+        If the losing condition was met,
+        the game state is set to reflect it.
+
+        Checks for the win condition.
+        If the win condition is met,
+        the game state is set to reflect it
+        and the user's win number is increased.
+
+        In every case,
+        increments turns_taken,
+        adds the played letter to letters_played
+        and increments the turn counter.
         """
         self = self.update_current_word(character)
         guessed_correctly = True
-        # Check for character in word first.
-        # This prevents a hijacked word submission
-        # from qualifying as an early win.
-        if character not in self.winning_word:
+
+        if played_letter not in self.winning_word:
             self.num_failed_guesses += 1
             guessed_correctly = False
 
@@ -97,7 +114,7 @@ class Game(models.Model):
             self.user_history.games_won += 1
 
         self.turns_taken += 1
-        self.letters_played += character
+        self.letters_played += played_letter
         self.save()
         return guessed_correctly
 
@@ -106,7 +123,7 @@ class Game(models.Model):
         Return the game instance
         with the current word updated
         to include the character
-        wherever it appears.
+        at each index where it appears.
         """
         indices = self._get_character_indices(self.winning_word, character)
         current_word_list = list(self.current_word)
@@ -119,8 +136,8 @@ class Game(models.Model):
         """
         Return the updated Game instance.
 
-        Update game_state with new_state,
-        increment games_played and reset active_game in related UserHistory.
+        Updates the game_state with the new_state parameter,
+        increments games_played and resets active_game for the client.
         """
         self.game_state = new_state
 
@@ -146,13 +163,6 @@ class Game(models.Model):
         """
         return sorted(set(self.ALPHABET) - set(list(self.letters_played)))
 
-    def _get_string_union(self, string1, string2):
-        """
-        Return a new string
-        containing all of the letters
-        in the two passed strings, unordered.
-        """
-        return "".join(set(list(string1)) | set(list(string2)))
 
 class WordManager(models.Manager):
     """
@@ -172,6 +182,7 @@ class WordManager(models.Manager):
 class Word(models.Model):
     """
     Each row represents one word in the word list.
+    word_text: the text of the word.
     """
     objects = WordManager()
     word_text = models.CharField(max_length=25)
