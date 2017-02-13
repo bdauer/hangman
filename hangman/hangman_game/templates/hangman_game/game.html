@@ -9,8 +9,9 @@
     </div>
     <div class="col-xs-4">
         <p>Turns taken: <span id="turns-taken">{{ game.turns_taken }}</span></p>
-        <p>Wins: {{ game.user_history.games_won }}</p>
-        <p>Losses: {{ game.user_history.games_lost }}
+        <p>Wins: <span id="wins">{{ game.user_history.games_won }}</span></p>
+        <p id="bad-guesses" hidden>{{ game.num_failed_guesses }}</p>
+        <p>Losses: <span id="losses">{{ game.user_history.games_lost }}</span></p>
     </div>
 </div>
 
@@ -73,10 +74,7 @@
              {% elif game.game_state == "W" %}
                 <h2>Success! The Accused Lives Another Day.</h3>
              {% endif %}
-                <form method="POST" action="{% url 'hangman_game:start game'  %}">
-                    {% csrf_token %}
                     <button type="button" name="new game" class="btn btn-default btn-primary btn-lg" type="button submit" id="new-game">Defend Another Accused</button>
-                </form>
         {% endif %}
         </div>
     </div>
