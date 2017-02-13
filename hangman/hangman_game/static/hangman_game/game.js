@@ -1,35 +1,16 @@
-// need to deal with losses
-
-// add listeners to each letter.
-
-// also need to trigger based on win/lose
-
-// ajax request for each new turn.
-// should send what I have to the server, only update what needs updating.
-
-
-// methods to update the three statistics.
-
-// method to disable letters that have been submitted
-
-// method to change placeholder text on words
-// played-letters-parent is the parent of the played-letters-display elems. Could also use that class.
-
-// methods for drawing on the canvas.
-
+$(main());
 
 function main() {
     prepareListeners();
     setDisplayedLetters();
 }
 
-
 /*
 Add all listeners.
 */
 function prepareListeners() {
-    var buttons = document.querySelectorAll('.alphabet');
-    addLetterListeners(buttons);
+    var keyboard_buttons = document.querySelectorAll('.alphabet');
+    addLetterListeners(keyboard_buttons);
 }
 
 /*
@@ -40,15 +21,15 @@ http://stackoverflow.com/a/8909792
 function addLetterListeners(buttons) {
 
     for (var i = 0, len = buttons.length; i < len; i++) {
-          var button = buttons[i];
+      var button = buttons[i];
+        // using a closure prevents reassignment,
+        // allowing for every button to get a listener.
       (function(button) {
-
-        button.addEventListener('click', function(evt) {
-            evt.preventDefault();
+        button.addEventListener('click', function() {
             button.disabled = true;
             updateTurnAjaxRequest(button);
         });
-    })(button);
+      })(button);
     }
 }
 
@@ -56,11 +37,15 @@ function addLetterListeners(buttons) {
 Performs all display updates after a turn has been taken.
 */
 function updateTurnDisplay(turn_data) {
-    incrementTurnsTaken();
+    incrementElem("turns-taken");
+    if (turn_data['guessed_correctly'] == false) {
+        incrementElem("bad-guesses");
+    }
     setDisplayedLetters(turn_data['current_word']);
     updateHangmanCanvas(turn_data['guessed_correctly']);
 
-    var game_state = turn_data['game_state']
+    // this variable tracks won/lost/active. See hangman_game/models.Game
+    var game_state = turn_data['game_state'];
     if (!(game_state == 'A')) {
         displayEndgame(game_state);
     }
@@ -72,6 +57,7 @@ Replaces the on-screen keyboard with the endgame message and button.
 function displayEndgame(game_state) {
 
     var endgame_message = document.createElement("h2");
+    endgame_message.id = "endgame-message";
     if (game_state == "L") {
         var endgame_content = document.createTextNode("You Let Them Die.");
     }
@@ -86,30 +72,19 @@ function displayEndgame(game_state) {
     new_game_button.id = "new-game";
     new_game_button.appendChild(button_content);
 
-    var form = document.createElement("form");
-    var csrftoken = getCookieValue('csrftoken');
-    var csrf_elem = document.createElement("input");
-    csrf_elem.type = 'hidden';
-    csrf_elem.name= 'csrfmiddlewaretoken';
-    csrf_elem.value = csrftoken;
-    form.method="POST";
-    form.action="start_game";
-    form.appendChild(csrf_elem);
-    form.appendChild(new_game_button);
-    console.log(form)
-
     var div = document.getElementById("alphabet-parent");
-
     div.appendChild(endgame_message);
-    div.appendChild(form);
+    div.appendChild(new_game_button);
 
-    var alphabet = document.querySelectorAll(".alphabet")
+    new_game_button.addEventListener('click', function() {
+        newGameAjaxRequest();
+    });
 
+    // hide the keyboard.
+    var alphabet = document.querySelectorAll(".alphabet");
     for (character of alphabet) {
         character.style.display = "none";
     }
-
-
 }
 
 /*
@@ -118,18 +93,44 @@ Updates the hangman canvas with the appropriate depiction.
 function updateHangmanCanvas(guessed_correctly) {
 
     if (guessed_correctly === false) {
+        var bad_guesses = document.getElementById("bad-guesses");
+
         var canvas = document.getElementById('hangman-canvas');
+        if (canvas.getContext) {
+            ctx = canvas.getContext('2d');
+
+            // switch(bad_guesses) {
+            //     case 1:
+            //         ctx.fillStyle = 'rgb(0, 0, 0)';
+            //         ctx.fillRect(10, 10, 20. 300);
+            //         ctx.fillRect(10, 10, 20. 300);
+            // } x, y, width, height
+            // pillar
+            ctx.fillRect(60, 20, 20, 350);
+            // base
+            ctx.fillRect(30, 350, 100, 20)
+            // arm
+            ctx.fillRect(60, 20, 180, 20)
+            // hook
+            ctx.fillRect(240, 20, 20, 40)
+
+
+
+            // draw();
+
+        } else {
+            // could fill this in for supporting older browsers.
+        }
         var turns_taken = document.getElementById('turns-taken');
-        canvas.innerHTML += turns_taken;
-    } else {
-        console.log(guessed_correctly)
     }
 }
 
 /*
 Sends an ajax POST request
-containing information about the
-task to update.
+containing the played character.
+
+On success, receives a json object containing:
+game_state, current_word, guessed_correctly.
 */
 function updateTurnAjaxRequest(elem) {
     $.ajaxSetup({
@@ -154,20 +155,84 @@ function updateTurnAjaxRequest(elem) {
     })
 };
 
-
+/*
+Sends an Ajax GET request.
+On success, receives a json object containing:
+games_won, games_lost and word_length.
+*/
+function newGameAjaxRequest() {
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+          }
+      }
+  });
+    var csrftoken = getCookieValue('csrftoken');
+    $.ajax({
+        url: 'start_game/',
+        type: 'GET',
+        success: function(resp) {
+            refreshForNewGame(resp);
+        }
+    })
+};
 
 /*
-Return the the displayed displayed.
+Set up a new game by removing/replacing old displays,
+including the endgame displays.
 */
-function getDisplayedLetters() {
-    return document.querySelectorAll('.played-letters-display');
+function refreshForNewGame(game_data) {
+
+    // reset stats.
+    resetCounterElem("turns-taken");
+    resetCounterElem("bad-guesses");
+    document.getElementById("wins").innerHTML = game_data["games_won"];
+    document.getElementById("losses").innerHTML = game_data["games_lost"];
+
+    // Clear the currently played word display.
+    var text_field_parent = document.getElementById("played-letters-parent");
+    while (text_field_parent.firstChild) {
+        text_field_parent.removeChild(text_field_parent.firstChild);
+    }
+
+    // build a new played word display.
+    for (var i=0; i < game_data["word_length"]; i++) {
+
+        var elem = document.createElement("input");
+        elem.type = "text";
+        elem.className = "text-center played-letters-display";
+        elem.id = (i + 1);
+        elem.placeholder = " ";
+        elem.disabled = true;
+        text_field_parent.appendChild(elem);
+    }
+
+    // get rid of endgame displays.
+    var alphabet_parent = document.getElementById("alphabet-parent");
+    var new_game_button = document.getElementById("new-game");
+    var endgame_message = document.getElementById("endgame-message");
+    new_game_button.parentElement.removeChild(new_game_button);
+    endgame_message.parentElement.removeChild(endgame_message);
+
+    // refresh and unhide the keyboard.
+    var alphabet = document.querySelectorAll(".alphabet");
+    for (character of alphabet) {
+        character.style.display = "";
+        character.removeAttribute("disabled");
+    }
+
+    // Clear the hangman canvas.
+    var canvas = document.getElementById('hangman-canvas');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /*
-Sets the characters to match the current word.
+Sets the displayed characters
+to match the current word.
 */
 function setDisplayedLetters(current_word) {
-    var letters = getDisplayedLetters();
+    var letters = document.querySelectorAll('.played-letters-display');
     var current_word = current_word;
 
     for (index in current_word) {
@@ -175,7 +240,7 @@ function setDisplayedLetters(current_word) {
             var character = current_word.charAt(index);
             if (character != " ") {
                 if ((letter.id - 1) == index) {
-                    letter.placeholder = character
+                    letter.placeholder = character;
                 }
             }
         }
@@ -187,7 +252,7 @@ Return a string containing the current word.
 */
 function getDisplayedWord() {
     var word = "";
-    var letters = getDisplayedLetters();
+    var letters = document.querySelectorAll('.played-letters-display');
 
     for (var i = 0, len = letters.length; i < len; i++) {
         word = word.concat(letters[i].placeholder);
@@ -216,19 +281,28 @@ function getCookieValue(name) {
 }
 
 /*
-Checks whether a method requires CSRF protection.
+Checks whether an HTTP request method requires CSRF protection.
 */
 function csrfSafeMethod(method) {
   // these HTTP methods do not require CSRF protection
   return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
-function incrementTurnsTaken() {
-    var turns_taken_elem = document.getElementById("turns-taken");
-    var turns_taken = turns_taken_elem.innerHTML;
-    turns_taken++;
-    turns_taken_elem.innerHTML = turns_taken;
+/*
+Increments an element counter.
+*/
+function incrementElem(elem_id) {
+    var elem = document.getElementById(elem_id);
+    var elem_text = elem.innerHTML;
+    elem_text++;
+    elem.innerHTML = elem_text;
 }
-
-
-$(main());
+/*
+Resets an element counter.
+*/
+function resetCounterElem(elem_id) {
+    var elem = document.getElementById(elem_id);
+    var elem_text = elem.innerHTML;
+    elem_text = "0";
+    elem.innerHTML = elem_text;
+}
