@@ -3,6 +3,7 @@ $(main());
 function main() {
     prepareListeners();
     setDisplayedLetters();
+    updateHangmanCanvas(false);
 }
 
 /*
@@ -93,35 +94,87 @@ Updates the hangman canvas with the appropriate depiction.
 function updateHangmanCanvas(guessed_correctly) {
 
     if (guessed_correctly === false) {
-        var bad_guesses = document.getElementById("bad-guesses");
+        var bad_guesses = document.getElementById("bad-guesses").innerHTML;
 
         var canvas = document.getElementById('hangman-canvas');
         if (canvas.getContext) {
             ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // switch(bad_guesses) {
-            //     case 1:
-            //         ctx.fillStyle = 'rgb(0, 0, 0)';
-            //         ctx.fillRect(10, 10, 20. 300);
-            //         ctx.fillRect(10, 10, 20. 300);
-            // } x, y, width, height
-            // pillar
-            ctx.fillRect(60, 20, 20, 350);
-            // base
-            ctx.fillRect(30, 350, 100, 20)
-            // arm
-            ctx.fillRect(60, 20, 180, 20)
-            // hook
-            ctx.fillRect(240, 20, 20, 40)
+            // the switches are in reverse order so that
+            // I can use the same method whenever the game is refreshed
+            // and it will draw the entire correct image.
+            var main_x = 250;
+            switch(bad_guesses) {
 
-
-
-            // draw();
-
-        } else {
-            // could fill this in for supporting older browsers.
+                case "10":
+                    // right eye
+                    ctx.beginPath();
+                    ctx.arc(main_x + 20, 90, 10, 0, 2 * Math.PI);
+                    ctx.stroke()
+               case "9":
+                    // right arm
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 180);
+                    ctx.lineTo(main_x + 50, 230);
+                    ctx.stroke();
+              case "8":
+                    // neck
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 140);
+                    ctx.lineTo(main_x, 160);
+                    ctx.stroke();
+              case "7":
+                    // left leg
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 260);
+                    ctx.lineTo(main_x - 60, 340);
+                    ctx.stroke();
+              case "6":
+                    // body
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 160);
+                    ctx.lineTo(main_x, 260);
+                    ctx.stroke();
+              case "5":
+                    // left arm
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 180);
+                    ctx.lineTo(main_x - 50, 230);
+                    ctx.stroke();
+              case "4":
+                    // mouth
+                    ctx.fillStyle = ('rgb(0, 0, 0)')
+                    ctx.beginPath();
+                    ctx.arc(main_x, 120, 15, 0, Math.PI, true);
+                    ctx.fill();
+              case "3":
+                    // left eye
+                    ctx.beginPath();
+                    ctx.arc(main_x - 20, 90, 10, 0, 2 * Math.PI);
+                    ctx.stroke()
+              case "2":
+                    // head
+                    ctx.beginPath();
+                    ctx.arc(main_x, 100, 40, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    // right leg
+                    ctx.beginPath();
+                    ctx.moveTo(main_x, 260);
+                    ctx.lineTo(main_x + 60, 340);
+                    ctx.stroke();
+                case "1":
+                    // base pillar
+                    ctx.fillStyle = 'rgb(71, 17, 30)';
+                    ctx.fillRect(60, 20, 20, 350);
+                    // base foundation
+                    ctx.fillRect(30, 350, 100, 20);
+                      // base arm
+                    ctx.fillRect(60, 20, 180, 20);
+                      // base hook
+                    ctx.fillRect(main_x - 10, 20, 20, 40);
+            }
         }
-        var turns_taken = document.getElementById('turns-taken');
     }
 }
 
