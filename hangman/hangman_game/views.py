@@ -65,7 +65,7 @@ def start_game(request):
     """
     Start a new game and redirect to the game view.
     """
-    if request.method == 'POST':
+    if request.method == 'GET':
         try:
             userid = request.get_signed_cookie('userid')
         except KeyError:
@@ -78,14 +78,31 @@ def start_game(request):
 
         # If there is an active game associated with the client,
         # restore that game instead of creating a new one.
-        try:
-            game = Game.objects.get(pk=user_history.active_game_id)
-        except ObjectDoesNotExist:
-            game = Game.objects.create_game(user_history)
-            game.user_history.active_game_id = game.id
+        if not request.is_ajax():
+            try:
+                game = Game.objects.get(pk=user_history.active_game_id)
+            except ObjectDoesNotExist:
+                game = Game.objects.create_game(user_history)
+                game.user_history.active_game_id = game.id
 
-        response = redirect('hangman_game:game',
-                        permanent=True)
+                response = redirect('hangman_game:game',
+                                permanent=True)
+
+        # Ajax requests are only ever used to update the game.
+        # this means that information
+        # which would have been provided by the template engine
+        # is unavailable unless the response is different.
+        # It also means there's no need to check if the object exists,
+        # saving a guery.
+        else:
+            game = Game.objects.create_game(user_history)
+
+            content = {'games_won': game.user_history.games_won,
+                       'games_lost': game.user_history.games_lost(),
+                       'word_length': len(game.current_word)}
+            response = JsonResponse(content)
+
+
         response.set_signed_cookie('gameid', game.id)
         return(response)
 
