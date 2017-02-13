@@ -13,6 +13,8 @@ class GameManagerTestCases(TestCase):
         uh = UserHistory.objects.get(pk=1)
         new_game = Game.objects.create_game(uh)
         self.assertEqual(new_game.winning_word, "fuzzypickles")
+        self.assertEqual(new_game.user_history, uh)
+        self.assertEqual(new_game.current_word, len("fuzzypickles") * " ")
 
 
 class GameTestCases(TestCase):
@@ -21,7 +23,6 @@ class GameTestCases(TestCase):
         Word.objects.create(word_text="fuzzypickles")
         uh = UserHistory.objects.create()
         new_game = Game.objects.create_game(uh)
-        new_game.save()
 
     def test_update_turn(self):
 
@@ -64,13 +65,10 @@ class GameTestCases(TestCase):
         game.update_turn("a")
         self.assertEqual(game.num_failed_guesses, 1)
 
-        # test matching indices returned with one match.
+        # test guessed correctly with matching letter.
         self.assertEqual(game.update_turn("f"), True)
 
-        # test matching indices returned with two matches.
-        self.assertEqual(game.update_turn("z"), True)
-
-        # test matching indices returned with zero matches.
+        # test guessed correctly with non-matching letter.
         self.assertEqual(game.update_turn("x"), False)
 
         # create losing condition
@@ -120,10 +118,18 @@ class WordManagerTestCases(TestCase):
     def setUp(self):
         Word.objects.create(word_text="fuzzypickles")
 
+    def test_len(self):
+        word = Word.objects.get(pk=1)
+        self.assertEqual(len(word), len("fuzzypickles"))
+
     def test_random(self):
         """
         Test that random returns the word in the database.
         """
         random_word = Word.objects.random()
         self.assertEqual(random_word.word_text, "fuzzypickles")
+
         # I'm a little unsure of how to test a random output for a larger table.
+    def test_get_ghost_value(self):
+        word = Word.objects.get(pk=1)
+        self.assertEqual(word.get_ghost_value(), len("fuzzypickles") * " ")
