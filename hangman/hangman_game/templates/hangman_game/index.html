@@ -18,10 +18,11 @@
     </div>
     <div class="col-xs-3"></div>
 </div>
-<form method="POST" action="{% url 'hangman_game:start game'  %}">
+<form method="GET" action="{% url 'hangman_game:start game'  %}">
     {% csrf_token %}
 <div class="row text-center">
     <button type="button submit" class="btn btn-primary btn-lg" name="New Game">Protect Accused</button>
 </div>
+</form>
 
 {% endblock %}
