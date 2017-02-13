@@ -12,6 +12,7 @@ Could see using this approach for a local app without a database.
 """
 import random
 import json
+from .models import Word
 
 
 def build_word_table(filename):
