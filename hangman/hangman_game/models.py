@@ -38,10 +38,10 @@ class GameManager(models.Manager):
         and defaults the currently guessed word to that length.
         """
         found_word = Word.objects.random().word_text
-        current_word = " " * len(found_word)
+        word_ghost = " " * len(found_word)
         game = self.create(winning_word=found_word,
                            user_history=user_history,
-                           current_word=current_word)
+                           current_word=word_ghost)
         return game
 
 class Game(models.Model):
@@ -103,7 +103,7 @@ class Game(models.Model):
         guessed_correctly = True
 
         if played_letter not in self.winning_word:
-            self.num_failed_guesses += 1
+            self.num_failed_guesses+= 1
             guessed_correctly = False
 
             if self.num_failed_guesses == self.MAX_FAILED_GUESSES:
@@ -170,7 +170,7 @@ class WordManager(models.Manager):
     """
     def random(self):
         """
-        Return a random word.
+        Return a random word's text.
         """
         count = self.aggregate(count=models.Count('id'))['count']
         try:
@@ -186,3 +186,18 @@ class Word(models.Model):
     """
     objects = WordManager()
     word_text = models.CharField(max_length=25)
+
+    def __len__(self):
+        """
+        Override len to get the length of a word.
+        """
+        return len(self.word_text)
+
+    def get_ghost_value(self):
+        """
+        Return the word with all of its letters replaced by spaces.
+
+        This is useful for initially populating the played letter fields.
+        """
+        # something bad here. need to fix.
+        return " " * len(self)
