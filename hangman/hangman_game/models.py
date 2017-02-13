@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 import random
 import uuid
 # Create your models here.
@@ -111,9 +112,8 @@ class Game(models.Model):
 
         elif self.current_word == self.winning_word:
             self = self._perform_end_game_updates('W')
-            self.user_history.games_won += 1
 
-        self.turns_taken += 1
+        self.turns_taken = F('turns_taken') + 1
         self.letters_played += played_letter
         self.save()
         return guessed_correctly
@@ -199,5 +199,4 @@ class Word(models.Model):
 
         This is useful for initially populating the played letter fields.
         """
-        # something bad here. need to fix.
         return " " * len(self)
