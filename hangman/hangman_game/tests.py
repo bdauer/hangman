@@ -7,10 +7,11 @@ class GameManagerTestCases(TestCase):
 
     def setUp(self):
         Word.objects.create(word_text="fuzzypickles")
+        UserHistory.objects.create()
 
     def test_create_game(self):
-
-        new_game = Game.objects.create_game()
+        uh = UserHistory.objects.get(pk=1)
+        new_game = Game.objects.create_game(uh)
         self.assertEqual(new_game.winning_word, "fuzzypickles")
 
 
@@ -18,8 +19,8 @@ class GameTestCases(TestCase):
 
     def setUp(self):
         Word.objects.create(word_text="fuzzypickles")
-        new_game = Game.objects.create_game()
-        new_game.user_history = UserHistory.objects.create()
+        uh = UserHistory.objects.create()
+        new_game = Game.objects.create_game(uh)
         new_game.save()
 
     def test_update_turn(self):
@@ -31,48 +32,57 @@ class GameTestCases(TestCase):
         self.assertEqual(game.letters_played, "")
 
         # test failed word
-        game.update_turn("fuzzy", "f")
+        game.update_turn("f")
+        game.save()
         self.assertEqual(game.game_state, 'A')
         self.assertEqual(game.turns_taken, 1)
-        self.assertEqual(set(list("fuzzy")), set(list(game.letters_played)))
+        self.assertEqual(set(list("f")), set(list(game.letters_played)))
 
         # test unmatching letters in word.
-        game.update_turn("foyer", "f")
-        self.assertEqual(set(list("fuzyoer")), set(list(game.letters_played)))
+        game.update_turn("f")
+        self.assertEqual(set(list("f")), set(list(game.letters_played)))
         self.assertEqual(game.game_state, 'A')
         self.assertEqual(game.turns_taken, 2)
 
         # test winning condition met
-        game.update_turn("fuzzypickles", "f")
+        game.update_turn("u")
+        game.update_turn("z")
+        game.update_turn("y")
+        game.update_turn("p")
+        game.update_turn("i")
+        game.update_turn("c")
+        game.update_turn("k")
+        game.update_turn("l")
+        game.update_turn("e")
+        game.update_turn("s")
         self.assertEqual(game.game_state, 'W')
-        self.assertEqual(game.turns_taken, 3)
 
         # reset game state
         game.game_state = 'A'
 
         # test num_failed_guesses
-        game.update_turn("f", "a")
+        game.update_turn("a")
         self.assertEqual(game.num_failed_guesses, 1)
 
         # test matching indices returned with one match.
-        self.assertEqual(game.update_turn("fuzzy", "f"), [0])
+        self.assertEqual(game.update_turn("f"), True)
 
         # test matching indices returned with two matches.
-        self.assertEqual(game.update_turn("fuzzy", "z"), [2, 3])
+        self.assertEqual(game.update_turn("z"), True)
 
         # test matching indices returned with zero matches.
-        self.assertEqual(game.update_turn("fuzzy", "x"), [])
+        self.assertEqual(game.update_turn("x"), False)
 
         # create losing condition
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
-        game.update_turn("f", "a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
+        game.update_turn("a")
 
         # test losing condition met
         self.assertEqual(game.game_state, 'L')
@@ -81,7 +91,8 @@ class GameTestCases(TestCase):
         """
         Test that it returns all remaining letters after having played a few.
         """
-        new_game = Game.objects.create_game()
+        uh = UserHistory.objects.get(pk=1)
+        new_game = Game.objects.create_game(uh)
         new_game.letters_played = "abc"
         new_game.save()
         remaining_letters = ['d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
